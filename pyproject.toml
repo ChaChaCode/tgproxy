@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tg-ws-proxy"
+version = "0.1.0"
+description = "Local SOCKS5 proxy that bridges Telegram over WebSocket"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "MOXY1337" }]
+dependencies = ["cryptography>=42.0"]
+
+[project.scripts]
+tgwsproxy = "tgwsproxy.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["tgwsproxy*"]
