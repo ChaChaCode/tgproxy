@@ -22,6 +22,18 @@ def _target_exe() -> str:
     return sys.executable  # dev fallback: python.exe (shortcut still valid)
 
 
+def _icon_location(target: str) -> str:
+    """Icon source for the shortcut.
+
+    The frozen exe embeds the icon, so pointing at the exe is stable and always
+    valid. From source we fall back to the repo's assets/icon.ico.
+    """
+    if getattr(sys, "frozen", False):
+        return f"{target},0"
+    ico = Path(__file__).resolve().parent.parent / "assets" / "icon.ico"
+    return f"{ico},0" if ico.exists() else f"{target},0"
+
+
 def create_desktop_shortcut(name: str = "TG WS Proxy") -> bool:
     """Create <Desktop>/<name>.lnk pointing at the exe. Returns success."""
     if os.name != "nt":
@@ -32,13 +44,14 @@ def create_desktop_shortcut(name: str = "TG WS Proxy") -> bool:
     lnk = desktop / f"{name}.lnk"
     target = _target_exe()
     workdir = str(Path(target).parent)
+    icon = _icon_location(target)
 
     ps = (
         "$ws = New-Object -ComObject WScript.Shell; "
         f"$s = $ws.CreateShortcut('{lnk}'); "
         f"$s.TargetPath = '{target}'; "
         f"$s.WorkingDirectory = '{workdir}'; "
-        f"$s.IconLocation = '{target},0'; "
+        f"$s.IconLocation = '{icon}'; "
         "$s.Save()"
     )
     try:
