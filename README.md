@@ -27,8 +27,24 @@ For each connection the proxy:
 3. Right-click the tray icon → **Open in Telegram**. Telegram asks to enable the
    proxy; confirm, and you're connected.
 
-No Python, no installation. Windows may warn about an unknown publisher on first
-run (the exe is unsigned) — that's expected.
+No Python, no installation needed.
+
+### "Windows protected your PC" (SmartScreen)
+
+On first launch Windows may show a blue **SmartScreen** warning saying the
+publisher is unknown. This appears for *every* app that isn't code-signed with a
+paid certificate — it is not a sign that anything is wrong with the file. To run
+it: click **More info** → **Run anyway**.
+
+If you'd rather verify the download first, the SHA-256 checksum of `TgProxy.exe`
+is shown on the [Releases](https://github.com/ChaChaCode/tgproxy/releases) page,
+and the full source is in this repo so you can build the exe yourself.
+
+**По-русски:** при первом запуске Windows может показать синее окно
+«Система Windows защитила ваш компьютер» (SmartScreen). Это появляется у **любой**
+программы без платной цифровой подписи и **не означает вирус**. Нажмите
+**«Подробнее» → «Выполнить в любом случае»**. Файл можно проверить по SHA-256 на
+странице релизов или собрать exe самому из исходников.
 
 ## Run from source (for developers)
 
