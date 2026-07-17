@@ -57,7 +57,7 @@ def show_welcome(port: int) -> WelcomeResult:
     result = WelcomeResult()
     root = ctk.CTk()
     root.title("TG WS Proxy")
-    root.geometry("560x500")
+    root.geometry("560x508")
     root.resizable(False, False)
     _set_window_icon(root)
 
@@ -93,7 +93,7 @@ def show_welcome(port: int) -> WelcomeResult:
                     variable=shortcut_var).pack(pady=(0, 6), **pad)
     keep_var = ctk.BooleanVar(value=True)
     ctk.CTkCheckBox(root, text="Показывать это окно при запуске",
-                    variable=keep_var).pack(pady=(0, 18), **pad)
+                    variable=keep_var).pack(pady=(0, 26), **pad)
 
     def on_start():
         result.started = True
