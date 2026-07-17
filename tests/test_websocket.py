@@ -4,7 +4,7 @@ import struct
 
 import pytest
 
-from tgwsproxy import websocket as ws
+from tgproxy import websocket as ws
 
 
 def test_mask_is_involutive():

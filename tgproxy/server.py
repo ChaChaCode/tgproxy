@@ -22,7 +22,7 @@ from . import bridge, socks5, telegram
 from .mtproto import dc_from_init
 from .websocket import RawWebSocket, WsHandshakeError
 
-log = logging.getLogger("tg-ws-proxy")
+log = logging.getLogger("tgproxy")
 
 DEFAULT_PORT = 2080
 WS_PATH = "/apiws"
@@ -158,7 +158,7 @@ async def run(port: int = DEFAULT_PORT, dc_ip: Optional[Dict[int, str]] = None,
     server = await asyncio.start_server(proxy.handle_client, "127.0.0.1", port)
 
     log.info("=" * 52)
-    log.info("  tg-ws-proxy listening on 127.0.0.1:%d", port)
+    log.info("  tgproxy listening on 127.0.0.1:%d", port)
     log.info("  Configure Telegram Desktop:")
     log.info("    SOCKS5 proxy -> 127.0.0.1:%d  (no user/pass)", port)
     log.info("=" * 52)

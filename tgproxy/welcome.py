@@ -21,7 +21,7 @@ class WelcomeResult:
     add_desktop_shortcut: bool = False  # checkbox: create a desktop shortcut
 
 
-def _shortcut_exists(name: str = "TG WS Proxy") -> bool:
+def _shortcut_exists(name: str = "TG Proxy") -> bool:
     return (Path.home() / "Desktop" / f"{name}.lnk").exists()
 
 
@@ -56,7 +56,7 @@ def show_welcome(port: int) -> WelcomeResult:
 
     result = WelcomeResult()
     root = ctk.CTk()
-    root.title("TG WS Proxy")
+    root.title("TG Proxy")
     root.geometry("560x508")
     root.resizable(False, False)
     _set_window_icon(root)

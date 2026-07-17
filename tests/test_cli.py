@@ -3,8 +3,8 @@ import asyncio
 
 import pytest
 
-from tgwsproxy import server
-from tgwsproxy.__main__ import parse_dc_ip_list
+from tgproxy import server
+from tgproxy.__main__ import parse_dc_ip_list
 
 
 def test_parse_dc_ip_ok():

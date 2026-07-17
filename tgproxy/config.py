@@ -11,9 +11,9 @@ import logging
 from pathlib import Path
 from typing import Dict
 
-log = logging.getLogger("tg-ws-proxy")
+log = logging.getLogger("tgproxy")
 
-APP_DIR = Path.home() / ".tg-ws-proxy"
+APP_DIR = Path.home() / ".tgproxy"
 CONFIG_FILE = APP_DIR / "config.json"
 LOG_FILE = APP_DIR / "proxy.log"
 

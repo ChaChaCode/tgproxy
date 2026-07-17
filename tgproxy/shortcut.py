@@ -12,7 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-log = logging.getLogger("tg-ws-proxy")
+log = logging.getLogger("tgproxy")
 
 
 def _target_exe() -> str:
@@ -34,7 +34,7 @@ def _icon_location(target: str) -> str:
     return f"{ico},0" if ico.exists() else f"{target},0"
 
 
-def create_desktop_shortcut(name: str = "TG WS Proxy") -> bool:
+def create_desktop_shortcut(name: str = "TG Proxy") -> bool:
     """Create <Desktop>/<name>.lnk pointing at the exe. Returns success."""
     if os.name != "nt":
         log.debug("desktop shortcut skipped: not Windows")
