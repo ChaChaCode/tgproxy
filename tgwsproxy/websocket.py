@@ -89,14 +89,18 @@ class RawWebSocket:
     @classmethod
     async def connect(
         cls,
-        ip: str,
         host: str,
         path: str,
         timeout: float = _HANDSHAKE_TIMEOUT,
     ) -> "RawWebSocket":
-        """TLS-connect to *ip*, upgrade to WebSocket for *host*/*path*."""
+        """TLS-connect to *host* (resolved via DNS) and upgrade to WebSocket.
+
+        The connection target is the WebSocket front (e.g. kws2.web.telegram.org),
+        which resolves to a different IP than the DC's MTProto endpoint and is the
+        only address that terminates TLS for the /apiws upgrade.
+        """
         reader, writer = await asyncio.wait_for(
-            asyncio.open_connection(ip, 443, ssl=_ssl_ctx, server_hostname=host),
+            asyncio.open_connection(host, 443, ssl=_ssl_ctx, server_hostname=host),
             timeout,
         )
 
