@@ -82,14 +82,19 @@ class Proxy:
             bridge._close_writer(writer)
             return
 
+        # DC detection is best-effort. If the init packet doesn't decode (real
+        # clients don't always start with a clean 64-byte obfuscated init), we
+        # still route over WebSocket using the DC implied by the target IP —
+        # direct TCP is usually what's being blocked, so it must not be the
+        # default path for Telegram traffic.
         detected = dc_from_init(init)
         if detected is None:
-            # Unknown framing: just tunnel it straight to the destination IP.
-            log.debug("[%s] DC undetected -> TCP passthrough", label)
-            await self._tcp_to(req.host, req.port, reader, writer, init, label)
-            return
+            dc_id, is_media = telegram.dc_for_ip(req.host), False
+            log.debug("[%s] DC undetected, assuming DC%d from IP %s",
+                      label, dc_id, req.host)
+        else:
+            dc_id, is_media = detected
 
-        dc_id, is_media = detected
         dst_ip = self._dc_ip.get(dc_id, req.host)
 
         if self._ws_on_cooldown(dc_id, is_media):
@@ -100,7 +105,7 @@ class Proxy:
 
         host = telegram.ws_host_for_dc(dc_id)
         try:
-            sock = await RawWebSocket.connect(req.host, host, WS_PATH, _WS_TIMEOUT)
+            sock = await RawWebSocket.connect(host, WS_PATH, _WS_TIMEOUT)
         except WsHandshakeError as exc:
             if exc.is_redirect:
                 self._ws_fail_until[(dc_id, is_media)] = time.monotonic() + _FAIL_COOLDOWN

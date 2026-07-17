@@ -44,6 +44,24 @@ def is_telegram_ip(ip: str) -> bool:
     return any(lo <= value <= hi for lo, hi in _TG_RANGES)
 
 
+# Best-effort mapping from a DC's canonical IP to its id, used when the DC
+# cannot be read from the init packet. These are Telegram's published DC IPs.
+_DC_BY_IP = {
+    "149.154.175.53": 1,
+    "149.154.167.51": 2,
+    "149.154.167.41": 2,
+    "149.154.175.100": 3,
+    "149.154.167.91": 4,
+    "149.154.167.92": 4,
+    "91.108.56.130": 5,
+}
+
+
+def dc_for_ip(ip: str, default: int = 2) -> int:
+    """Guess the DC id for a Telegram *ip*, defaulting to DC 2 (most common)."""
+    return _DC_BY_IP.get(ip, default)
+
+
 def ws_host_for_dc(dc_id: int) -> str:
     """WebSocket host to reach a DC.
 
