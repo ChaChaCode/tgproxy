@@ -14,7 +14,7 @@ a = Analysis(
     ["run_tray.py"],
     pathex=[],
     binaries=[],
-    datas=collect_data_files("customtkinter"),  # bundle its theme assets
+    datas=collect_data_files("customtkinter") + [("assets/icon.ico", "assets")],
     hiddenimports=hiddenimports,
     hookspath=[],
     excludes=[],
@@ -34,4 +34,5 @@ exe = EXE(
     upx=True,
     console=False,          # no console window; runs from the tray
     disable_windowed_traceback=False,
+    icon="assets/icon.ico",  # exe file icon
 )

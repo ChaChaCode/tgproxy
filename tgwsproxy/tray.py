@@ -98,7 +98,27 @@ class TrayApp:
     # -- icon ----------------------------------------------------------------
 
     @staticmethod
-    def _make_icon(size: int = 64) -> "Image.Image":
+    def _icon_path() -> Optional[str]:
+        """Locate the bundled icon, whether running frozen or from source."""
+        import sys
+        candidates = []
+        if getattr(sys, "frozen", False):
+            candidates.append(Path(sys._MEIPASS) / "assets" / "icon.ico")  # type: ignore[attr-defined]
+        candidates.append(Path(__file__).resolve().parent.parent / "assets" / "icon.ico")
+        for c in candidates:
+            if c.exists():
+                return str(c)
+        return None
+
+    @classmethod
+    def _make_icon(cls, size: int = 64) -> "Image.Image":
+        path = cls._icon_path()
+        if path:
+            try:
+                return Image.open(path)
+            except Exception:
+                pass
+        # Fallback: simple blue disc with a T.
         img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
         draw.ellipse((4, 4, size - 4, size - 4), fill=(41, 128, 185, 255))
