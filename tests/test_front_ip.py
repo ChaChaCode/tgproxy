@@ -15,6 +15,14 @@ def test_media_host_uses_dash_one_variant():
     assert telegram.ws_host_for_dc(2, is_media=True) == "kws2-1.web.telegram.org"
 
 
+def test_dc_for_ip_returns_none_for_unknown():
+    """Never guess: a wrong DC routes the stream to the wrong endpoint and
+    Telegram then reports the proxy as misconfigured."""
+    assert telegram.dc_for_ip("149.154.167.51") == 2
+    assert telegram.dc_for_ip("91.108.56.129") is None
+    assert telegram.dc_for_ip("149.154.167.35") is None
+
+
 def test_connect_dials_given_ip_not_dns(monkeypatch):
     """When ip= is passed, connect must use it and never resolve the host."""
     dialed = {}

@@ -57,9 +57,14 @@ _DC_BY_IP = {
 }
 
 
-def dc_for_ip(ip: str, default: int = 2) -> int:
-    """Guess the DC id for a Telegram *ip*, defaulting to DC 2 (most common)."""
-    return _DC_BY_IP.get(ip, default)
+def dc_for_ip(ip: str) -> Optional[int]:
+    """DC id for a known Telegram *ip*, or None if we don't recognise it.
+
+    Returning None matters: guessing a DC for an unknown address would route the
+    stream to the wrong data-center's WebSocket endpoint, which Telegram detects
+    and reports as a misconfigured proxy. Unknown addresses must pass through.
+    """
+    return _DC_BY_IP.get(ip)
 
 
 def ws_host_for_dc(dc_id: int, is_media: bool = False) -> str:

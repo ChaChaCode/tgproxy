@@ -111,32 +111,43 @@ class Proxy:
             bridge._close_writer(writer)
             return
 
-        # DC detection is best-effort. If the init packet doesn't decode (real
-        # clients don't always start with a clean 64-byte obfuscated init), we
-        # still route over WebSocket using the DC implied by the target IP —
-        # direct TCP is usually what's being blocked, so it must not be the
-        # default path for Telegram traffic.
+        # DC detection is best-effort: real clients don't always open with a
+        # clean 64-byte obfuscated init, so fall back to the DC implied by the
+        # destination IP.
         detected = dc_from_init(init)
         if detected is None:
-            dc_id, is_media = telegram.dc_for_ip(req.host), False
-            log.debug("[%s] DC undetected, assuming DC%d from IP %s",
-                      label, dc_id, req.host)
+            guessed = telegram.dc_for_ip(req.host)
+            if guessed is None:
+                log.debug("[%s] unknown DC for %s:%d -> passthrough",
+                          label, req.host, req.port)
+                await self._tcp_to(req.host, req.port, reader, writer, init, label)
+                return
+            dc_id, is_media = guessed, False
+            log.debug("[%s] DC undetected, DC%d from IP %s", label, dc_id, req.host)
         else:
             dc_id, is_media = detected
 
-        dst_ip = self._dc_ip.get(dc_id, req.host)
+        # Only bridge DCs we have a front IP for. Only some DCs answer the WS
+        # upgrade on a reachable front address (others 302), and the DC guessed
+        # from an IP can be wrong — routing such a stream to another DC's
+        # endpoint makes Telegram reject the proxy as misconfigured. Passing it
+        # through untouched is always correct.
+        front_ip = self._dc_ip.get(dc_id)
+        if front_ip is None:
+            log.debug("[%s] DC%d has no front IP -> passthrough to %s:%d",
+                      label, dc_id, req.host, req.port)
+            await self._tcp_to(req.host, req.port, reader, writer, init, label)
+            return
+
+        dst_ip = front_ip
 
         if self._ws_on_cooldown(dc_id, is_media):
             log.info("[%s] DC%d%s WS on cooldown -> TCP", label, dc_id,
                      " media" if is_media else "")
-            await self._tcp_to(dst_ip, req.port, reader, writer, init, label)
+            await self._tcp_to(req.host, req.port, reader, writer, init, label)
             return
 
         host = telegram.ws_host_for_dc(dc_id, is_media)
-        # Prefer an operator-configured front IP for this DC: some ISPs blackhole
-        # the address the kws* name resolves to but leave other Telegram IPs up,
-        # and dialling those with the right SNI reaches the same endpoint.
-        front_ip = self._dc_ip.get(dc_id)
         try:
             sock = await RawWebSocket.connect(host, WS_PATH, _WS_TIMEOUT, ip=front_ip)
         except WsHandshakeError as exc:
