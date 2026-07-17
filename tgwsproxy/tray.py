@@ -113,8 +113,32 @@ class TrayApp:
             pystray.MenuItem("Quit", self._on_quit),
         )
 
+    def _maybe_show_welcome(self) -> None:
+        """Show the start window if enabled, then honour the user's choices."""
+        if not self._cfg.get("show_welcome", True):
+            return
+        try:
+            from .welcome import show_welcome
+        except Exception as exc:  # GUI toolkit missing: skip silently
+            log.debug("welcome window unavailable: %s", exc)
+            return
+
+        result = show_welcome(self._cfg["port"])
+        if result.keep_showing != self._cfg.get("show_welcome", True):
+            self._cfg["show_welcome"] = result.keep_showing
+            config.save(self._cfg)
+        if result.started and result.add_desktop_shortcut:
+            try:
+                from .shortcut import create_desktop_shortcut
+                create_desktop_shortcut()
+            except Exception as exc:
+                log.debug("shortcut creation failed: %s", exc)
+        if result.started and result.open_in_telegram:
+            self.open_in_telegram()
+
     def run(self) -> None:
         self.start_proxy()
+        self._maybe_show_welcome()
         self._icon = pystray.Icon(
             "tg-ws-proxy",
             icon=self._make_icon(),
