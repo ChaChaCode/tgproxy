@@ -62,11 +62,13 @@ def dc_for_ip(ip: str, default: int = 2) -> int:
     return _DC_BY_IP.get(ip, default)
 
 
-def ws_host_for_dc(dc_id: int) -> str:
+def ws_host_for_dc(dc_id: int, is_media: bool = False) -> str:
     """WebSocket host to reach a DC.
 
-    DCs 1-5 are served under web.telegram.org; higher ids (test/media variants)
-    fall back to the bare telegram.org zone, mirroring the official web client.
+    DCs 1-5 are served under web.telegram.org; higher ids fall back to the bare
+    telegram.org zone. Media connections use the "-1" variant of the host, the
+    same naming the official web client uses (e.g. kws2-1.web.telegram.org).
     """
     zone = "web.telegram.org" if 1 <= dc_id <= 5 else "telegram.org"
-    return f"kws{dc_id}.{zone}"
+    suffix = "-1" if is_media else ""
+    return f"kws{dc_id}{suffix}.{zone}"

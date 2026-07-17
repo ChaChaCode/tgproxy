@@ -21,7 +21,13 @@ DEFAULT_CONFIG: Dict = {
     "port": 2080,
     "verbose": False,
     "show_welcome": True,  # show the start window on launch
-    "dc_ip": {},  # {"2": "149.154.167.220", ...}
+    # Front IPs to dial per DC. The kws* names resolve to an address some ISPs
+    # blackhole; these Telegram IPs stay reachable and serve the same endpoint
+    # when the WS hostname is sent as SNI. Override per network if needed.
+    "dc_ip": {
+        "2": "149.154.167.220",
+        "4": "149.154.167.220",
+    },
 }
 
 

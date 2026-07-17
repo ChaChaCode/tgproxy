@@ -14,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import os
+import socket
 import ssl
 import struct
 from typing import Dict, Optional
@@ -27,6 +28,33 @@ OP_PING = 0x9
 OP_PONG = 0xA
 
 _HANDSHAKE_TIMEOUT = 10.0
+
+# Telegram opens a dozen connections at once. Resolving the same WS host for
+# every one of them floods asyncio's small default executor on Windows, and the
+# queued getaddrinfo calls make connects time out even though the endpoint
+# answers in milliseconds. Resolve once per host and reuse the address.
+_dns_cache: Dict[str, str] = {}
+_dns_lock: Optional[asyncio.Lock] = None
+
+
+async def _resolve(host: str) -> str:
+    """Resolve *host* to an IP, caching the answer for the process lifetime."""
+    global _dns_lock
+    cached = _dns_cache.get(host)
+    if cached:
+        return cached
+    if _dns_lock is None:
+        _dns_lock = asyncio.Lock()
+    async with _dns_lock:
+        cached = _dns_cache.get(host)  # another task may have filled it
+        if cached:
+            return cached
+        loop = asyncio.get_running_loop()
+        infos = await loop.getaddrinfo(host, 443, family=socket.AF_INET,
+                                       type=socket.SOCK_STREAM)
+        ip = infos[0][4][0]
+        _dns_cache[host] = ip
+        return ip
 
 # TLS context that does not verify the certificate. Telegram's WS endpoints are
 # reached by IP with an SNI host that will not always match the presented cert,
@@ -92,15 +120,19 @@ class RawWebSocket:
         host: str,
         path: str,
         timeout: float = _HANDSHAKE_TIMEOUT,
+        ip: Optional[str] = None,
     ) -> "RawWebSocket":
-        """TLS-connect to *host* (resolved via DNS) and upgrade to WebSocket.
+        """TLS-connect and upgrade to WebSocket for *host*/*path*.
 
-        The connection target is the WebSocket front (e.g. kws2.web.telegram.org),
-        which resolves to a different IP than the DC's MTProto endpoint and is the
-        only address that terminates TLS for the /apiws upgrade.
+        When *ip* is given we dial that address and only present *host* as the
+        TLS SNI / HTTP Host header. This matters where an ISP blackholes the
+        address `kws*.web.telegram.org` resolves to while leaving other Telegram
+        front IPs reachable — dialling a working IP with the right SNI gets the
+        same endpoint. Falls back to resolving *host* when no IP is supplied.
         """
+        target = ip or await asyncio.wait_for(_resolve(host), timeout)
         reader, writer = await asyncio.wait_for(
-            asyncio.open_connection(host, 443, ssl=_ssl_ctx, server_hostname=host),
+            asyncio.open_connection(target, 443, ssl=_ssl_ctx, server_hostname=host),
             timeout,
         )
 

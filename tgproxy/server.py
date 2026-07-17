@@ -53,7 +53,10 @@ def find_free_port(preferred: int, host: str = "127.0.0.1", tries: int = 20) -> 
 
 
 _INIT_READ = 64
-_WS_TIMEOUT = 10.0
+# Telegram opens a dozen connections at once and each one does a TLS handshake;
+# under that burst a connect can take a couple of seconds. Be generous — timing
+# out here drops us to the direct-TCP path, which is exactly what ISPs block.
+_WS_TIMEOUT = 20.0
 _TCP_TIMEOUT = 10.0
 _FAIL_COOLDOWN = 300.0  # seconds to avoid WebSocket after it fails for a DC
 
@@ -129,9 +132,13 @@ class Proxy:
             await self._tcp_to(dst_ip, req.port, reader, writer, init, label)
             return
 
-        host = telegram.ws_host_for_dc(dc_id)
+        host = telegram.ws_host_for_dc(dc_id, is_media)
+        # Prefer an operator-configured front IP for this DC: some ISPs blackhole
+        # the address the kws* name resolves to but leave other Telegram IPs up,
+        # and dialling those with the right SNI reaches the same endpoint.
+        front_ip = self._dc_ip.get(dc_id)
         try:
-            sock = await RawWebSocket.connect(host, WS_PATH, _WS_TIMEOUT)
+            sock = await RawWebSocket.connect(host, WS_PATH, _WS_TIMEOUT, ip=front_ip)
         except WsHandshakeError as exc:
             if exc.is_redirect:
                 self._ws_fail_until[(dc_id, is_media)] = time.monotonic() + _FAIL_COOLDOWN
@@ -143,8 +150,10 @@ class Proxy:
             await self._tcp_to(dst_ip, req.port, reader, writer, init, label)
             return
         except Exception as exc:
-            log.info("[%s] DC%d WS connect failed (%s) -> TCP fallback",
-                     label, dc_id, exc)
+            # TimeoutError and friends stringify to "", which told us nothing
+            # while debugging — always include the exception type.
+            log.info("[%s] DC%d WS connect failed (%s: %s) -> TCP fallback",
+                     label, dc_id, type(exc).__name__, exc or "no detail")
             await self._tcp_to(dst_ip, req.port, reader, writer, init, label)
             return
 

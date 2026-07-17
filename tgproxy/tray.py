@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
+import sys
 import threading
 import webbrowser
 from pathlib import Path
@@ -165,12 +167,27 @@ class TrayApp:
         draw.text((size // 2 - 6, size // 2 - 12), "T", fill="white")
         return img
 
+    def _on_open_logs(self, *_args) -> None:
+        """Open the log file in the user's default text editor."""
+        try:
+            config.ensure_dir()
+            config.LOG_FILE.touch(exist_ok=True)
+            os.startfile(str(config.LOG_FILE))  # noqa: S606 - opening our own log
+        except Exception as exc:
+            log.warning("could not open log file: %s", exc)
+            self._show_error(f"Не удалось открыть лог:\n{config.LOG_FILE}")
+
     def _build_menu(self) -> "pystray.Menu":
         return pystray.Menu(
-            pystray.MenuItem("Open in Telegram", self.open_in_telegram, default=True),
-            pystray.MenuItem("Restart proxy", self._on_restart),
+            pystray.MenuItem("Открыть в Telegram", self.open_in_telegram, default=True),
+            pystray.MenuItem(
+                lambda _: f"Порт: {self._cfg['port']}", None, enabled=False
+            ),
             pystray.Menu.SEPARATOR,
-            pystray.MenuItem("Quit", self._on_quit),
+            pystray.MenuItem("Перезапустить прокси", self._on_restart),
+            pystray.MenuItem("Открыть логи", self._on_open_logs),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("Выход", self._on_quit),
         )
 
     def _maybe_show_welcome(self) -> None:
@@ -216,10 +233,17 @@ def main() -> None:
         return
 
     cfg = config.load()
+    config.ensure_dir()
+    # The packaged exe is windowed, so stdout goes nowhere — always log to file,
+    # otherwise there is no way to diagnose a user's connection problem.
+    handlers = [logging.FileHandler(config.LOG_FILE, encoding="utf-8")]
+    if sys.stdout is not None:
+        handlers.append(logging.StreamHandler(sys.stdout))
     logging.basicConfig(
         level=logging.DEBUG if cfg.get("verbose") else logging.INFO,
         format="%(asctime)s  %(levelname)-5s  %(message)s",
         datefmt="%H:%M:%S",
+        handlers=handlers,
     )
     TrayApp().run()
 
