@@ -20,24 +20,39 @@ For each connection the proxy:
 5. if the WebSocket handshake is redirected or blocked, falls back to a direct
    TCP connection to the DC and remembers the failure for a while.
 
-## Install
+## Download (for users)
+
+1. Grab **`TgProxy.exe`** from the [Releases](https://github.com/ChaChaCode/tgproxy/releases) page.
+2. Run it — an icon appears in the system tray.
+3. Right-click the tray icon → **Open in Telegram**. Telegram asks to enable the
+   proxy; confirm, and you're connected.
+
+No Python, no installation. Windows may warn about an unknown publisher on first
+run (the exe is unsigned) — that's expected.
+
+## Run from source (for developers)
 
 ```bash
-git clone https://github.com/ChaChaCode/tg-ws-proxy.git
-cd tg-ws-proxy
+git clone https://github.com/ChaChaCode/tgproxy.git
+cd tgproxy
 pip install -r requirements.txt
+
+python -m tgwsproxy            # CLI, listens on 127.0.0.1:2080
+python -m tgwsproxy --port 2085 -v
+pip install pystray pillow
+python -m tgwsproxy.tray       # tray app
 ```
 
-## Run
+To configure Telegram manually: Settings → Advanced → Connection type → Use
+custom proxy → **SOCKS5**, host `127.0.0.1`, port `2080`, no username/password.
+
+## Build the exe
 
 ```bash
-python -m tgwsproxy            # listens on 127.0.0.1:2080
-python -m tgwsproxy --port 2085 -v
-python -m tgwsproxy --dc-ip 2:149.154.167.220
+pip install pyinstaller pystray pillow
+python -m PyInstaller build.spec
+# result: dist/TgProxy.exe
 ```
-
-Then in **Telegram Desktop**: Settings → Advanced → Connection type → Use custom
-proxy → **SOCKS5**, host `127.0.0.1`, port `2080`, no username/password.
 
 ## Options
 

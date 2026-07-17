@@ -5,6 +5,9 @@ venv/
 build/
 dist/
 *.egg-info/
+*.spec.bak
+tray.log
+live.log
 .pytest_cache/
 config.json
 *.log
