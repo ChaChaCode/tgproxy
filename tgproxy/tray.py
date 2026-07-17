@@ -17,7 +17,8 @@ from pathlib import Path
 from typing import Optional
 
 from . import config
-from .server import run as run_proxy
+from .server import find_free_port, port_is_free, run as run_proxy
+from .single_instance import already_running, show_already_running_message
 
 try:
     import pystray
@@ -44,9 +45,46 @@ class TrayApp:
         if self._thread and self._thread.is_alive():
             log.info("proxy already running")
             return
+
+        # Another program (VPN client, other proxy) may already hold the port.
+        # Move to a free one rather than silently failing to bind.
+        wanted = self._cfg["port"]
+        if not port_is_free(wanted):
+            free = find_free_port(wanted + 1)
+            if free is None:
+                self._show_error(
+                    f"Порт {wanted} занят другой программой, и свободный порт "
+                    f"найти не удалось.\n\nЗакройте другие прокси/VPN-клиенты "
+                    f"и запустите TG Proxy заново."
+                )
+                return
+            log.warning("port %d busy, switching to %d", wanted, free)
+            self._cfg["port"] = free
+            config.save(self._cfg)
+            self._show_info(
+                f"Порт {wanted} занят другой программой (например, VPN-клиентом).\n\n"
+                f"TG Proxy запущен на порту {free} — используйте его в Telegram."
+            )
+
         self._thread = threading.Thread(target=self._proxy_main, daemon=True)
         self._thread.start()
         log.info("proxy starting on port %d", self._cfg["port"])
+
+    @staticmethod
+    def _show_error(text: str, title: str = "TG Proxy") -> None:
+        try:
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(0, text, title, 0x10)  # MB_ICONERROR
+        except Exception:
+            log.error("%s", text)
+
+    @staticmethod
+    def _show_info(text: str, title: str = "TG Proxy") -> None:
+        try:
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(0, text, title, 0x40)  # MB_ICONINFORMATION
+        except Exception:
+            log.info("%s", text)
 
     def _proxy_main(self) -> None:
         loop = asyncio.new_event_loop()
@@ -63,6 +101,7 @@ class TrayApp:
             )
         except Exception as exc:
             log.error("proxy crashed: %s", exc)
+            self._show_error(f"Прокси остановился с ошибкой:\n\n{exc}")
         finally:
             loop.close()
 
@@ -170,6 +209,12 @@ class TrayApp:
 
 
 def main() -> None:
+    # Bow out early if another copy is already in the tray, so we don't end up
+    # with two proxies fighting over the same port.
+    if already_running():
+        show_already_running_message()
+        return
+
     cfg = config.load()
     logging.basicConfig(
         level=logging.DEBUG if cfg.get("verbose") else logging.INFO,

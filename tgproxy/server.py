@@ -26,6 +26,32 @@ log = logging.getLogger("tgproxy")
 
 DEFAULT_PORT = 2080
 WS_PATH = "/apiws"
+
+
+def port_is_free(port: int, host: str = "127.0.0.1") -> bool:
+    """Return True if *port* can be bound right now.
+
+    Other proxy/VPN clients (Throne, sing-box, v2ray...) commonly squat on 2080;
+    without this check a failed bind would leave the tray icon sitting there
+    doing nothing while Telegram silently talks to the other program.
+    """
+    import socket as _s
+    with _s.socket(_s.AF_INET, _s.SOCK_STREAM) as sock:
+        try:
+            sock.bind((host, port))
+            return True
+        except OSError:
+            return False
+
+
+def find_free_port(preferred: int, host: str = "127.0.0.1", tries: int = 20) -> Optional[int]:
+    """Return *preferred* if it is free, else the next free port after it."""
+    for candidate in range(preferred, preferred + tries):
+        if port_is_free(candidate, host):
+            return candidate
+    return None
+
+
 _INIT_READ = 64
 _WS_TIMEOUT = 10.0
 _TCP_TIMEOUT = 10.0
