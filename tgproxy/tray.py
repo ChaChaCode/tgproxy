@@ -177,14 +177,40 @@ class TrayApp:
             log.warning("could not open log file: %s", exc)
             self._show_error(f"Не удалось открыть лог:\n{config.LOG_FILE}")
 
+    def _on_settings(self, *_args) -> None:
+        """Open the settings dialog on its own thread (Tk needs one to itself)."""
+        threading.Thread(target=self._settings_dialog, daemon=True).start()
+
+    def _settings_dialog(self) -> None:
+        try:
+            from .settings import show_settings
+        except Exception as exc:
+            log.warning("settings window unavailable: %s", exc)
+            self._show_error("Окно настроек недоступно.")
+            return
+
+        updated = show_settings(self._cfg)
+        if updated is None:
+            return  # cancelled
+        port_changed = updated["port"] != self._cfg["port"]
+        self._cfg = updated
+        config.save(self._cfg)
+        log.info("settings saved: port=%s dc_ip=%s verbose=%s",
+                 self._cfg["port"], self._cfg["dc_ip"], self._cfg["verbose"])
+        self.restart_proxy()
+        if port_changed:
+            self._show_info(
+                f"Настройки сохранены. Прокси перезапущен на порту {self._cfg['port']}.\n\n"
+                f"Не забудьте изменить порт в Telegram."
+            )
+
     def _build_menu(self) -> "pystray.Menu":
         return pystray.Menu(
-            pystray.MenuItem("Открыть в Telegram", self.open_in_telegram, default=True),
-            pystray.MenuItem(
-                lambda _: f"Порт: {self._cfg['port']}", None, enabled=False
-            ),
+            pystray.MenuItem(lambda _: f"Открыть в Telegram (:{self._cfg['port']})",
+                             self.open_in_telegram, default=True),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Перезапустить прокси", self._on_restart),
+            pystray.MenuItem("Настройки...", self._on_settings),
             pystray.MenuItem("Открыть логи", self._on_open_logs),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Выход", self._on_quit),
@@ -236,7 +262,9 @@ def main() -> None:
     config.ensure_dir()
     # The packaged exe is windowed, so stdout goes nowhere — always log to file,
     # otherwise there is no way to diagnose a user's connection problem.
-    handlers = [logging.FileHandler(config.LOG_FILE, encoding="utf-8")]
+    # mode="w": each launch starts a fresh log, so what you read is this session
+    # only and the file cannot grow without bound.
+    handlers = [logging.FileHandler(config.LOG_FILE, mode="w", encoding="utf-8")]
     if sys.stdout is not None:
         handlers.append(logging.StreamHandler(sys.stdout))
     logging.basicConfig(

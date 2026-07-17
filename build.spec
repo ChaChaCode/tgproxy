@@ -6,8 +6,8 @@ hiddenimports = (
     collect_submodules("pystray")
     + collect_submodules("PIL")
     + collect_submodules("customtkinter")
-    + ["tgproxy.server", "tgproxy.tray", "tgproxy.config",
-       "tgproxy.welcome", "tgproxy.shortcut", "tgproxy.single_instance"]
+    + ["tgproxy.server", "tgproxy.tray", "tgproxy.config", "tgproxy.welcome",
+       "tgproxy.shortcut", "tgproxy.single_instance", "tgproxy.settings"]
 )
 
 a = Analysis(
