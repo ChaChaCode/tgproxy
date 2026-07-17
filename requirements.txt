@@ -1,6 +1,6 @@
 cryptography>=42.0
 
-# GUI extras (tray + start window). Not needed for the CLI (python -m tgwsproxy).
+# GUI extras (tray + start window). Not needed for the CLI (python -m tgproxy).
 pystray>=0.19
 pillow>=10.0
 customtkinter>=5.2

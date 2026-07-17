@@ -5,7 +5,7 @@ import struct
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from tgwsproxy import mtproto, socks5, telegram
+from tgproxy import mtproto, socks5, telegram
 
 
 def test_is_telegram_ip():

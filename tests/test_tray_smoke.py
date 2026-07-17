@@ -8,7 +8,7 @@ import pytest
 pytest.importorskip("pystray")
 pytest.importorskip("PIL")
 
-from tgwsproxy.tray import TrayApp
+from tgproxy.tray import TrayApp
 
 
 def test_icon_path_does_not_raise():

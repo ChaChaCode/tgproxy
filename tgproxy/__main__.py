@@ -1,4 +1,4 @@
-"""Command-line entry point: python -m tgwsproxy [--port N] [--dc-ip DC:IP]..."""
+"""Command-line entry point: python -m tgproxy [--port N] [--dc-ip DC:IP]..."""
 from __future__ import annotations
 
 import argparse
@@ -29,7 +29,7 @@ def parse_dc_ip_list(items: List[str]) -> Dict[int, str]:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="tgwsproxy",
+        prog="tgproxy",
         description="Local SOCKS5 proxy that bridges Telegram over WebSocket.",
     )
     p.add_argument("--port", type=int, default=DEFAULT_PORT,
@@ -57,7 +57,7 @@ def main(argv=None) -> int:
     try:
         asyncio.run(run(port=args.port, dc_ip=dc_ip))
     except KeyboardInterrupt:
-        logging.getLogger("tg-ws-proxy").info("shutting down")
+        logging.getLogger("tgproxy").info("shutting down")
     return 0
 
 

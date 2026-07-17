@@ -1,4 +1,4 @@
-# tg-ws-proxy
+# tgproxy
 
 A small local **SOCKS5 proxy that keeps Telegram working through DPI-based
 blocking** by tunnelling its MTProto traffic over WebSocket — the same transport
@@ -53,10 +53,10 @@ git clone https://github.com/ChaChaCode/tgproxy.git
 cd tgproxy
 pip install -r requirements.txt
 
-python -m tgwsproxy            # CLI, listens on 127.0.0.1:2080
-python -m tgwsproxy --port 2085 -v
+python -m tgproxy            # CLI, listens on 127.0.0.1:2080
+python -m tgproxy --port 2085 -v
 pip install pystray pillow
-python -m tgwsproxy.tray       # tray app
+python -m tgproxy.tray       # tray app
 ```
 
 To configure Telegram manually: Settings → Advanced → Connection type → Use

@@ -1,7 +1,7 @@
 """Tests for config load/save and DC-id key coercion."""
 import json
 
-from tgwsproxy import config
+from tgproxy import config
 
 
 def test_defaults_when_missing(tmp_path, monkeypatch):

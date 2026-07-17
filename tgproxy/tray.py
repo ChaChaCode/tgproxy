@@ -1,4 +1,4 @@
-"""System-tray front-end for tg-ws-proxy.
+"""System-tray front-end for tgproxy.
 
 Runs the asyncio proxy on a background thread and exposes a small tray menu:
 start / stop / restart, "Open in Telegram" (which hands Telegram a tg://socks
@@ -27,7 +27,7 @@ except ImportError as exc:  # pragma: no cover - GUI extra not installed
         "Tray mode needs the GUI extras. Install with: pip install pystray pillow"
     ) from exc
 
-log = logging.getLogger("tg-ws-proxy")
+log = logging.getLogger("tgproxy")
 
 
 class TrayApp:
@@ -161,9 +161,9 @@ class TrayApp:
         self.start_proxy()
         self._maybe_show_welcome()
         self._icon = pystray.Icon(
-            "tg-ws-proxy",
+            "tgproxy",
             icon=self._make_icon(),
-            title="tg-ws-proxy",
+            title="TG Proxy",
             menu=self._build_menu(),
         )
         self._icon.run()
