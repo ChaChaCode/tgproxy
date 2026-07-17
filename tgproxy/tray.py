@@ -133,9 +133,30 @@ class TrayApp:
         threading.Thread(target=self.restart_proxy, daemon=True).start()
 
     def _on_quit(self, *_args) -> None:
-        self.stop_proxy()
+        """Quit now.
+
+        Runs on pystray's menu thread, so it must not block: stop_proxy() waits
+        on the proxy thread and would freeze the icon (and with a settings window
+        open, its Tk loop keeps the process alive anyway). Take the icon down
+        first, shut the proxy down in the background, and make sure the process
+        actually exits.
+        """
         if self._icon:
+            self._icon.visible = False
             self._icon.stop()
+
+        def shutdown() -> None:
+            try:
+                self.stop_proxy()
+            except Exception as exc:
+                log.debug("error while stopping proxy on quit: %s", exc)
+            finally:
+                logging.shutdown()
+                # Hard-exit: Tk windows or lingering threads must not keep the
+                # tray app running after the user asked it to quit.
+                os._exit(0)
+
+        threading.Thread(target=shutdown, daemon=True).start()
 
     # -- icon ----------------------------------------------------------------
 
