@@ -1,4 +1,4 @@
-# tgproxy
+# TG Proxy
 
 A small local **SOCKS5 proxy that keeps Telegram working through DPI-based
 blocking** by tunnelling its MTProto traffic over WebSocket — the same transport
@@ -6,6 +6,10 @@ blocking** by tunnelling its MTProto traffic over WebSocket — the same transpo
 interfered with.
 
 Point Telegram Desktop at it as an ordinary SOCKS5 proxy and it does the rest.
+
+<p align="center">
+  <img src="assets/screenshot.png" alt="TG Proxy start window" width="420">
+</p>
 
 ## How it works
 
