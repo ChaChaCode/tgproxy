@@ -20,6 +20,7 @@ LOG_FILE = APP_DIR / "proxy.log"
 DEFAULT_CONFIG: Dict = {
     "port": 2080,
     "verbose": False,
+    "show_welcome": True,  # show the start window on launch
     "dc_ip": {},  # {"2": "149.154.167.220", ...}
 }
 
