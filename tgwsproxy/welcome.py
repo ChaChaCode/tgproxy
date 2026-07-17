@@ -57,7 +57,7 @@ def show_welcome(port: int) -> WelcomeResult:
     result = WelcomeResult()
     root = ctk.CTk()
     root.title("TG WS Proxy")
-    root.geometry("560x560")
+    root.geometry("560x500")
     root.resizable(False, False)
     _set_window_icon(root)
 
@@ -108,7 +108,7 @@ def show_welcome(port: int) -> WelcomeResult:
 
     ctk.CTkButton(root, text="Начать", height=44, corner_radius=10,
                   font=ctk.CTkFont(size=15, weight="bold"),
-                  command=on_start).pack(padx=28, fill="x")
+                  command=on_start).pack(padx=28, pady=(0, 24), fill="x")
 
     root.protocol("WM_DELETE_WINDOW", on_close)
     root.after(50, root.lift)
