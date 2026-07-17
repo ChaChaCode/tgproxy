@@ -25,6 +25,30 @@ def _shortcut_exists(name: str = "TG WS Proxy") -> bool:
     return (Path.home() / "Desktop" / f"{name}.lnk").exists()
 
 
+def _icon_ico_path() -> Path | None:
+    """Find icon.ico whether running frozen (PyInstaller) or from source."""
+    import sys
+    candidates = []
+    if getattr(sys, "frozen", False):
+        candidates.append(Path(sys._MEIPASS) / "assets" / "icon.ico")  # type: ignore[attr-defined]
+    candidates.append(Path(__file__).resolve().parent.parent / "assets" / "icon.ico")
+    for c in candidates:
+        if c.exists():
+            return c
+    return None
+
+
+def _set_window_icon(root) -> None:
+    """Set the title-bar / taskbar icon for the window."""
+    ico = _icon_ico_path()
+    if not ico:
+        return
+    try:
+        root.iconbitmap(str(ico))
+    except Exception:
+        pass
+
+
 def show_welcome(port: int) -> WelcomeResult:
     """Display the start window and block until the user acts. Returns choices."""
     ctk.set_appearance_mode("system")
@@ -35,6 +59,7 @@ def show_welcome(port: int) -> WelcomeResult:
     root.title("TG WS Proxy")
     root.geometry("560x560")
     root.resizable(False, False)
+    _set_window_icon(root)
 
     accent = "#2f81f7"
 
